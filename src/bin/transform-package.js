@@ -1,13 +1,13 @@
 #! /usr/bin/env node
 
-import { argv } from 'yargs'
+import { argv }from 'yargs'
 import { assert } from 'chai'
 import deasync from 'deasync'
-import transformPackage from '../'
+import transformPackage from '../lib'
 
 
 const usage = actual => `usage: transform-package <path/to/transform/dir> <package.json> | you passed ${JSON.stringify(actual)}`
-const args = argv.__
+const args = argv._
 const handleError = err => {
   if(err)
     console.error(err, usage(args))

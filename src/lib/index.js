@@ -5,11 +5,13 @@ import { assert } from 'chai'
 import fs from 'fs'
 import path from 'path'
 
-
+console.info(0, 'imported')
 
 export default function transformPackage(packageTransformDir, packagePath) {
-  readPaths(packageTransformDir).then(packageTransformPaths => {
-    readJSON(packagePath).then(packageJSON => {
+  console.info(1, packageTransformDir, packagePath)
+  return readPaths(packageTransformDir).then(packageTransformPaths => {
+    console.info(2, packageTransformPaths)
+    return readJSON(packagePath).then(packageJSON => {
       let promises = Promise.all(packageTransformPaths.map(transformPath => readJSON(transformPath).then(transformJSON => [path.basename(transformPath, '.json'), transformJSON])))
       return promises.then(transforms => transforms.reduce((newPackageJSON, transform) => {
         let [key, transformJSON] = transform
@@ -23,7 +25,7 @@ const readPaths = dirPath => {
   return new Promise((resolve, reject) => {
     fs.readdir(dirPath, (err, files) => {
       if(err) reject(err)
-      resolve(files)
+      resolve(files.map(x => path.join(dirPath, x)))
     })
   })
 }

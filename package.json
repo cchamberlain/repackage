@@ -13,8 +13,8 @@
   ],
   "scripts": {
     "prebuild": "rimraf bin && rimraf lib",
-    "build": "babel src/bin -d bin && babel src/lib -d lib",
-    "watch": "babel src/bin -d bin --watch & babel src/lib -d lib --watch",
+    "build": "babel src -d .",
+    "watch": "npm run build -- --watch",
     "predoc": "rimraf doc",
     "doc": "esdoc -c ./esdoc.json",
     "prerelease": "npm run build",
