@@ -7,11 +7,12 @@ import deasync from 'deasync'
 import transformPackage from '../lib'
 
 let argv = yargs.usage('usage: $0 <command> [options]')
-                .command('init', 'initialize repackage with transform directory and config file', { username: { alias: 'u' } }
-                                                                                                , { organization: { alias: 'o' } }
-                                                                                                , { full: { alias: 'f' } }
-                                                                                                , { email: { alias: 'e' } }
-                                                                                                , { host: { alias: 'h', default: 'github.io' } })
+                .command('init', 'initialize repackage with transform directory and config file', y => y.option('u', { alias: 'username' })
+                                                                                                        .option('o', { alias: 'organization' })
+                                                                                                        .option('f', { alias: 'full' })
+                                                                                                        .option('e', { alias: 'email' })
+                                                                                                        .option('h', { alias: 'host' })
+                                                                                                        .demand(['u', 'f', 'e', 'h']))
                 .alias('i', 'init')
                 .describe('i', 'initialize a source package directory')
                 .alias('t', 'transform')
@@ -20,6 +21,7 @@ let argv = yargs.usage('usage: $0 <command> [options]')
                 .describe('p', 'relative path to package.json file')
                 .default({ t: 'src/package', p: 'package.json' })
                 .help()
+                .strict()
                 .epilog(`cheers from ${new Date().year}`)
                 .argv
 
@@ -41,7 +43,9 @@ transformPackage(argv.transform, argv.package)
     done = true
   })
   .catch(err => {
-    console.error(handleError(err))
+
+    console.error(err) //handleError(err))
+    yargs.showHelp()
     done = true
   })
 deasync.loopWhile(() => !done)
