@@ -1,8 +1,8 @@
 window.esdocSearchIndex = [
   [
-    "transform-package~transformpackage",
+    "repackage~transformpackage",
     "function/index.html#static-function-transformPackage",
-    "<span>transformPackage</span> <span class=\"search-result-import-path\">transform-package</span>",
+    "<span>transformPackage</span> <span class=\"search-result-import-path\">repackage</span>",
     "function"
   ],
   [

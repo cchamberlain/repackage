@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">lib/index.js | transform-package API Document</title>
+  <title data-ice="title">lib/index.js | repackage API Document</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -19,7 +19,7 @@
   <a href="identifiers.html">Reference</a>
   <a href="source.html">Source</a>
   
-  <a data-ice="repoURL" href="https://github.com/cchamberlain/transform-package" class="repo-url-github">Repository</a>
+  <a data-ice="repoURL" href="https://github.com/cchamberlain/repackage" class="repo-url-github">Repository</a>
   <div class="search-box">
   <span>
     <img src="./image/search.png">
@@ -51,7 +51,7 @@ const isWin = process.platform === &apos;win32&apos;
 export default function transformPackage(packageTransformDir, packagePath) {
   return readPaths(packageTransformDir).then(packageTransformPaths =&gt; {
     let imports = packageTransformPaths.filter(x =&gt; x.endsWith(&apos;.js&apos;))
-    return readJSON(&apos;package.config.json&apos;).then(config =&gt; {
+    return readJSON(&apos;.repackagerc&apos;).then(config =&gt; {
       return Promise.all(imports.map(importPath =&gt; System.import(importPath).then(lib =&gt; transformNode([path.basename(importPath, &apos;.js&apos;), loadNode(config, lib)]))))
                     .then(libs =&gt; Object.assign({}, ...libs))
                     .then(packageFields =&gt; {
@@ -82,7 +82,7 @@ export default function transformPackage(packageTransformDir, packagePath) {
                           }, {})))
                         })
                       })
-                    }).catch(err =&gt;{ throw err }) //new Error(&apos;No package.config.json found. Add one to your project root as specified at https://transform-package.js.org&apos;))
+                    }).catch(err =&gt;{ throw err }) //new Error(&apos;No package.config.json found. Add one to your project root as specified at https://repackage.js.org&apos;))
     })
 }
 

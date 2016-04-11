@@ -1,10 +1,10 @@
 {
-  "name": "transform-package",
-  "version": "0.1.2",
-  "description": "Transforms a package.json file. Fixes environment variable usage to make scripts Windows and OSX compatible.",
+  "name": "repackage",
+  "version": "0.2.6",
+  "description": "Builds package.json file from its component parts. Fixes environment variable usage to make scripts Windows and OSX compatible.",
   "main": "lib/index.js",
   "bin": {
-    "transform-package": "bin/transform-package.js"
+    "repackage": "bin/repackage.js"
   },
   "files": [
     "bin",
@@ -12,6 +12,7 @@
     "doc"
   ],
   "scripts": {
+    "repackage": "node bin/repackage -t src/package -p package.json",
     "prebuild": "rimraf bin && rimraf lib",
     "build": "babel src -d .",
     "watch": "npm run build -- --watch",
@@ -27,7 +28,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cchamberlain/transform-package.git"
+    "url": "git+https://github.com/cchamberlain/repackage.git"
   },
   "keywords": [
     "package.json",
@@ -50,9 +51,9 @@
   "author": "Cole Chamberlain <cole.chamberlain@gmail.com> (https://github.com/cchamberlain)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/cchamberlain/transform-package/issues"
+    "url": "https://github.com/cchamberlain/repackage/issues"
   },
-  "homepage": "https://transform-package.js.org",
+  "homepage": "https://repackage.js.org",
   "dependencies": {
     "chai": "^3.5.0",
     "deasync": "^0.1.4",
