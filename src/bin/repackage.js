@@ -7,12 +7,11 @@ import deasync from 'deasync'
 import transformPackage from '../lib'
 
 let argv = yargs.usage('usage: $0 <command> [options]')
-                .command('init', 'initialize repackage with transform directory and config file', y => y.option('u', { alias: 'username' })
-                                                                                                        .option('o', { alias: 'organization' })
-                                                                                                        .option('f', { alias: 'full' })
-                                                                                                        .option('e', { alias: 'email' })
-                                                                                                        .option('h', { alias: 'host' })
-                                                                                                        .demand(['u', 'f', 'e', 'h']))
+                .command('init', 'initialize repackage with transform directory and config file', y => y.option('u', { alias: 'username', demand: true })
+                                                                                                        .option('o', { alias: 'organization', demand: true })
+                                                                                                        .option('f', { alias: 'full', demand: true })
+                                                                                                        .option('e', { alias: 'email', demand: true })
+                                                                                                        .option('h', { alias: 'host', demand: true }))
                 .alias('i', 'init')
                 .describe('i', 'initialize a source package directory')
                 .alias('t', 'transform')
