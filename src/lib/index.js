@@ -42,7 +42,7 @@ export default function transformPackage(packageTransformDir, packagePath) {
                           }, {})))
                         })
                       })
-                    }).catch(err =>{ throw err }) //new Error('No package.config.json found. Add one to your project root as specified at https://transform-package.js.org'))
+                    }).catch(err =>{ throw err }) //new Error('No package.config.json found. Add one to your project root as specified at https://repackage.js.org'))
     })
 }
 
