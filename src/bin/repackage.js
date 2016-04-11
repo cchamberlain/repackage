@@ -1,18 +1,19 @@
 #! /usr/bin/env node
 
 import path from 'path'
+import fs from 'fs'
 import yargs from 'yargs'
 import { assert } from 'chai'
 import deasync from 'deasync'
 import transformPackage from '../lib'
 
-let argv = yargs.usage('usage: $0 <command> [options]')
-                .command('init', 'initialize repackage with transform directory and config file', y => y.option('u', { alias: 'username', demand: true })
-                                                                                                        .option('o', { alias: 'organization', demand: true })
-                                                                                                        .option('f', { alias: 'full', demand: true })
-                                                                                                        .option('e', { alias: 'email', demand: true })
-                                                                                                        .option('h', { alias: 'host', demand: true })
-                                                                                                        .requiresArg(['u', 'o', 'f', 'e', 'h']))
+let argv = yargs.usage('usage: $0 [init [options]] [options]')
+                .command('init', 'initialize repackage with transform directory and .repackagerc file', y => y.option('username', { alias: 'u', demand: true, describe: 'your github username' })
+                                                                                                              .option('organization', { alias: 'o', demand: false, describe: 'your github organization (falls back to username)' })
+                                                                                                              .option('full', { alias: 'f', demand: true, describe: 'your full name (e.g. John Smith)' })
+                                                                                                              .option('email', { alias: 'e', demand: true, describe: 'your email' })
+                                                                                                              .option('host', { alias: 'h', demand: false, describe: `the host for your documentation: 'github.io' OR 'js.org'` }))
+
                 .alias('i', 'init')
                 .describe('i', 'initialize a source package directory')
                 .alias('t', 'transform')
@@ -26,13 +27,19 @@ let argv = yargs.usage('usage: $0 <command> [options]')
                 .argv
 
 
-
-const usage = (actual, message) => `usage: repackage [path/to/transform/dir] [path/to/package.json] | you passed ${JSON.stringify(actual)} | message: ${message}`
-const args = argv._
-const handleError = (message, err) => {
-  if(err) console.error(err, usage(args, message))
-  else console.error(usage(args, message))
-  process.exit(1)
+if(argv.init) {
+  let { username, organization, full, email, host } = argv.init
+  let repackagerc = { username, organization, full, email, host }
+  try {
+    fs.writeFileSync('.repackagerc', JSON.stringify(repackagerc, null, 2), 'utf8')
+  } catch(err) {
+    if(err) {
+      console.error(err, 'error during writing .repackagerc')
+      yargs.showHelp()
+      process.exit(1)
+    }
+  }
+  process.exit(0)
 }
 
 
@@ -43,8 +50,8 @@ transformPackage(argv.transform, argv.package)
     done = true
   })
   .catch(err => {
-
-    console.error(err) //handleError(err))
+    console.error(err, 'you may need to use repackage init [options]')
+    console.error('you may ')
     yargs.showHelp()
     done = true
   })

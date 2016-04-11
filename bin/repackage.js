@@ -5,6 +5,10 @@ var _path = require('path');
 
 var _path2 = _interopRequireDefault(_path);
 
+var _fs = require('fs');
+
+var _fs2 = _interopRequireDefault(_fs);
+
 var _yargs = require('yargs');
 
 var _yargs2 = _interopRequireDefault(_yargs);
@@ -21,26 +25,38 @@ var _lib2 = _interopRequireDefault(_lib);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var argv = _yargs2.default.usage('usage: $0 <command> [options]').command('init', 'initialize repackage with transform directory and config file', function (y) {
-  return y.option('u', { alias: 'username' }).option('o', { alias: 'organization' }).option('f', { alias: 'full' }).option('e', { alias: 'email' }).option('h', { alias: 'host' }).demand(['u', 'f', 'e', 'h']);
+var argv = _yargs2.default.usage('usage: $0 [init [options]] [options]').command('init', 'initialize repackage with transform directory and .repackagerc file', function (y) {
+  return y.option('username', { alias: 'u', demand: true, describe: 'your github username' }).option('organization', { alias: 'o', demand: false, describe: 'your github organization (falls back to username)' }).option('full', { alias: 'f', demand: true, describe: 'your full name (e.g. John Smith)' }).option('email', { alias: 'e', demand: true, describe: 'your email' }).option('host', { alias: 'h', demand: false, describe: 'the host for your documentation: \'github.io\' OR \'js.org\'' });
 }).alias('i', 'init').describe('i', 'initialize a source package directory').alias('t', 'transform').describe('t', 'relative path to package transform directory').alias('p', 'package').describe('p', 'relative path to package.json file').default({ t: 'src/package', p: 'package.json' }).help().strict().epilog('cheers from ' + new Date().year).argv;
 
-var usage = function usage(actual, message) {
-  return 'usage: repackage [path/to/transform/dir] [path/to/package.json] | you passed ' + JSON.stringify(actual) + ' | message: ' + message;
-};
-var args = argv._;
-var handleError = function handleError(message, err) {
-  if (err) console.error(err, usage(args, message));else console.error(usage(args, message));
-  process.exit(1);
-};
+if (argv.init) {
+  var _argv$init = argv.init;
+  var username = _argv$init.username;
+  var organization = _argv$init.organization;
+  var full = _argv$init.full;
+  var email = _argv$init.email;
+  var host = _argv$init.host;
+
+  var repackagerc = { username: username, organization: organization, full: full, email: email, host: host };
+  try {
+    _fs2.default.writeFileSync('.repackagerc', JSON.stringify(repackagerc, null, 2), 'utf8');
+  } catch (err) {
+    if (err) {
+      console.error(err, 'error during writing .repackagerc');
+      _yargs2.default.showHelp();
+      process.exit(1);
+    }
+  }
+  process.exit(0);
+}
 
 var done = false;
 (0, _lib2.default)(argv.transform, argv.package).then(function (message) {
   console.info(message);
   done = true;
 }).catch(function (err) {
-
-  console.error(err); //handleError(err))
+  console.error(err, 'you may need to use repackage init [options]');
+  console.error('you may ');
   _yargs2.default.showHelp();
   done = true;
 });

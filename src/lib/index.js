@@ -11,7 +11,7 @@ const isWin = process.platform === 'win32'
 export default function transformPackage(packageTransformDir, packagePath) {
   return readPaths(packageTransformDir).then(packageTransformPaths => {
     let imports = packageTransformPaths.filter(x => x.endsWith('.js'))
-    return readJSON('package.config.json').then(config => {
+    return readJSON('.repackagerc').then(config => {
       return Promise.all(imports.map(importPath => System.import(importPath).then(lib => transformNode([path.basename(importPath, '.js'), loadNode(config, lib)]))))
                     .then(libs => Object.assign({}, ...libs))
                     .then(packageFields => {
