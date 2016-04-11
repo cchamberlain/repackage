@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">lib/index.js | transform-package API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/cchamberlain/transform-package" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-transformPackage">transformPackage</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">lib/index.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">#! /usr/bin/env node
+
+import { argv } from &apos;yargs&apos;
+import { assert } from &apos;chai&apos;
+import fs from &apos;fs&apos;
+import path from &apos;path&apos;
+import System from &apos;systemjs&apos;
+
+const isWin = process.platform === &apos;win32&apos;
+
+export default function transformPackage(packageTransformDir, packagePath) {
+  return readPaths(packageTransformDir).then(packageTransformPaths =&gt; {
+    let imports = packageTransformPaths.filter(x =&gt; x.endsWith(&apos;.js&apos;))
+    return readJSON(&apos;package.config.json&apos;).then(config =&gt; {
+      return Promise.all(imports.map(importPath =&gt; System.import(importPath).then(lib =&gt; transformNode([path.basename(importPath, &apos;.js&apos;), loadNode(config, lib)]))))
+                    .then(libs =&gt; Object.assign({}, ...libs))
+                    .then(packageFields =&gt; {
+                        return readJSON(packagePath).then(packageJSON =&gt; {
+                          return Promise.all(packageTransformPaths.filter(x =&gt; x.endsWith(&apos;.json&apos;)).map(transformPath =&gt; {
+                            return readJSON(transformPath).then(transformJSON =&gt; transformNode([path.basename(transformPath, &apos;.json&apos;), transformJSON]))
+                          }))
+                          .then(transforms =&gt; Object.assign({}, packageJSON, ...transforms, packageFields))
+                          .then(packageUnsorted =&gt; writeJSON(packagePath, Object.keys(packageUnsorted).sort((a, b) =&gt; {
+                            const sortBy = [&apos;name&apos;, &apos;version&apos;, &apos;description&apos;, &apos;main&apos;, &apos;bin&apos;, &apos;files&apos;, &apos;keywords&apos;, &apos;scripts&apos;, &apos;dependencies&apos;, &apos;devDependencies&apos;, &apos;peerDependencies&apos;, &apos;optionalDependencies&apos;]
+                            let indexOfA = sortBy.indexOf(a)
+                            let indexOfB = sortBy.indexOf(b)
+                            if(indexOfA !== -1 &amp;&amp; indexOfB !== -1) {
+                              if(indexOfA &lt; indexOfB)
+                                return -1
+                              if(indexOfA &gt; indexOfB)
+                                return 1
+                              return 0
+                            }
+                            if(indexOfA !== -1)
+                              return -1
+                            if(indexOfB !== -1)
+                              return 1
+                            return a.localeCompare(b)
+                          }).reduce((obj, key) =&gt; {
+                            obj[key] = packageUnsorted[key]
+                            return obj
+                          }, {})))
+                        })
+                      })
+                    }).catch(err =&gt;{ throw err }) //new Error(&apos;No package.config.json found. Add one to your project root as specified at https://transform-package.js.org&apos;))
+    })
+}
+
+const loadNode = (config, lib) =&gt; {
+  let libNode = lib.default || lib
+  return typeof libNode === &apos;function&apos; ? libNode(config) : libNode
+}
+
+
+const transformNode = ([key, node]) =&gt; {
+  if(key === &apos;scripts&apos; &amp;&amp; isWin) {
+    return  { [key]: Object.keys(node)
+                          .map(scriptName =&gt; ([scriptName, node[scriptName].replace(/NODE_ENV=([A-Za-z_-]+)/, &apos;set NODE_ENV=$1&amp;&amp;&apos;)]))
+                          .reduce((result, [scriptName, script]) =&gt; {
+                            result[scriptName] = script
+                            return result
+                          }, {})
+            }
+  }
+  return { [key]: node }
+}
+
+const readPaths = dirPath =&gt; {
+  return new Promise((resolve, reject) =&gt; {
+    fs.readdir(dirPath, (err, files) =&gt; {
+      if(err) return reject(err)
+      resolve(files.filter(x =&gt; x !== &apos;config.json&apos;).map(x =&gt; path.join(dirPath, x)))
+    })
+  })
+}
+
+const readJSON = jsonPath =&gt; {
+  return new Promise((resolve, reject) =&gt; {
+    fs.readFile(jsonPath, &apos;utf8&apos;, (err, json) =&gt; {
+      if(err) return reject(err)
+      resolve(JSON.parse(json))
+    })
+  })
+}
+
+const writeJSON = (jsonPath, json) =&gt; {
+  return new Promise((resolve, reject) =&gt; {
+    fs.writeFile(jsonPath, JSON.stringify(json, null, 2), &apos;utf8&apos;, (err) =&gt; {
+      if(err) return reject(err)
+      resolve(`${jsonPath} saved successfully!`)
+    })
+  })
+}
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.6)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>
