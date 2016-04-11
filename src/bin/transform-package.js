@@ -1,29 +1,24 @@
 #! /usr/bin/env node
 
+import path from 'path'
 import { argv }from 'yargs'
 import { assert } from 'chai'
 import deasync from 'deasync'
 import transformPackage from '../lib'
 
 
-const usage = actual => `usage: transform-package <path/to/transform/dir> <package.json> | you passed ${JSON.stringify(actual)}`
+const usage = (actual, message) => `usage: transform-package [path/to/transform/dir] [path/to/package.json] | you passed ${JSON.stringify(actual)} | message: ${message}`
 const args = argv._
-const handleError = err => {
-  if(err)
-    console.error(err, usage(args))
-  else
-    console.error(usage(args))
+const handleError = (message, err) => {
+  if(err) console.error(err, usage(args, message))
+  else console.error(usage(args, message))
   process.exit(1)
 }
 
-if(!args)
-  handleError(new Error('No args passed.'))
-if(args.length > 2)
-  handleError(new Error('Too many args passed.'))
+let [packageTransformDir = 'src/package', packagePath = 'package.json']  = args
 
-const [packageTransformDir, packagePath]  = args
 let done = false
-transformPackage(packageTransformDir, packagePath || 'package.json')
+transformPackage(packageTransformDir, packagePath)
   .then(message => {
     console.info(message)
     done = true
