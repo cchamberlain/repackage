@@ -11,7 +11,7 @@ const isWin = process.platform === 'win32'
 export default function transformPackage(packageTransformDir, packagePath) {
   return readPaths(packageTransformDir).then(packageTransformPaths => {
     let imports = packageTransformPaths.filter(x => x.endsWith('.js'))
-    readJSON('package.config.json').then(config => {
+    return readJSON('package.config.json').then(config => {
       return Promise.all(imports.map(importPath => System.import(importPath).then(lib => transformNode([path.basename(importPath, '.js'), loadNode(config, lib)]))))
                     .then(libs => Object.assign({}, ...libs))
                     .then(packageFields => {
@@ -21,17 +21,19 @@ export default function transformPackage(packageTransformDir, packagePath) {
                           }))
                           .then(transforms => Object.assign({}, packageJSON, ...transforms, packageFields))
                           .then(packageUnsorted => writeJSON(packagePath, Object.keys(packageUnsorted).sort((a, b) => {
-                            if(a === 'name')
+                            const sortBy = ['name', 'version', 'description', 'main', 'bin', 'files', 'keywords', 'scripts', 'dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
+                            let indexOfA = sortBy.indexOf(a)
+                            let indexOfB = sortBy.indexOf(b)
+                            if(indexOfA !== -1 && indexOfB !== -1) {
+                              if(indexOfA < indexOfB)
+                                return -1
+                              if(indexOfA > indexOfB)
+                                return 1
+                              return 0
+                            }
+                            if(indexOfA !== -1)
                               return -1
-                            if(b === 'name')
-                              return 1
-                            if(a === 'version')
-                              return -1
-                            if(b === 'version')
-                              return 1
-                            if(a === 'description')
-                              return -1
-                            if(b === 'description')
+                            if(indexOfB !== -1)
                               return 1
                             return a.localeCompare(b)
                           }).reduce((obj, key) => {
@@ -40,7 +42,7 @@ export default function transformPackage(packageTransformDir, packagePath) {
                           }, {})))
                         })
                       })
-                    })
+                    }).catch(err =>{ throw err }) //new Error('No package.config.json found. Add one to your project root as specified at https://transform-package.js.org'))
     })
 }
 
@@ -66,7 +68,7 @@ const transformNode = ([key, node]) => {
 const readPaths = dirPath => {
   return new Promise((resolve, reject) => {
     fs.readdir(dirPath, (err, files) => {
-      if(err) reject(err)
+      if(err) return reject(err)
       resolve(files.filter(x => x !== 'config.json').map(x => path.join(dirPath, x)))
     })
   })
@@ -75,7 +77,7 @@ const readPaths = dirPath => {
 const readJSON = jsonPath => {
   return new Promise((resolve, reject) => {
     fs.readFile(jsonPath, 'utf8', (err, json) => {
-      if(err) reject(err)
+      if(err) return reject(err)
       resolve(JSON.parse(json))
     })
   })
@@ -84,7 +86,7 @@ const readJSON = jsonPath => {
 const writeJSON = (jsonPath, json) => {
   return new Promise((resolve, reject) => {
     fs.writeFile(jsonPath, JSON.stringify(json, null, 2), 'utf8', (err) => {
-      if(err) reject(err)
+      if(err) return reject(err)
       resolve(`${jsonPath} saved successfully!`)
     })
   })
