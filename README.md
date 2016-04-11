@@ -1,16 +1,16 @@
-# [transform-package](https://npmjs.com/packages/transform-package)
+# [repackage](https://npmjs.com/packages/repackage)
 
 Transforms a set of package.json transforms to create a new package.json. Targets a specific platform for output so scripts are cross compatible with Windows and OSX.
 
 Save as a dev dependency.
 
-`npm i -D transform-package`
+`npm i -D repackage`
 
 
 ### CLI
 
 
-`transform-package /path/to/package.scripts.json [path/to/package.json]`
+`repackage /path/to/package.scripts.json [path/to/package.json]`
 
 
 * If package.json path left blank, current working directory is assumed.
@@ -26,12 +26,13 @@ From scripts section of your package.json:
 
 {
   "scripts": {
-    "build-package": "transform-package src/package/package.scripts.json",
+    "build-package": "repackage src/package/package.scripts.json",
     "prebuild": "npm run build-package",
     "build": "..."
   }
 }
 
+```
 
 ___
 
@@ -39,4 +40,11 @@ ___
 ### API
 
 
-Support coming soon...
+```js
+
+import repackage from 'repackage'
+repackage('path/to/transform/dir', 'path/to/package.json')
+  .then(message => console.info(message))
+  .catch(err => console.error(err))
+
+```

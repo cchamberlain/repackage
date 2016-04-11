@@ -1,10 +1,17 @@
 #! /usr/bin/env node
 
 import path from 'path'
-import { argv }from 'yargs'
+import yargs from 'yargs'
 import { assert } from 'chai'
 import deasync from 'deasync'
 import transformPackage from '../lib'
+
+let argv = yargs.usage('usage: $0 <command> [options]')
+                .command('init', 'initialize package')
+                .alias('i', 'init')
+                .describe('i', 'initialize a source package directory')
+                .command('transform', 'relative path to package transform directory', { })
+                .epilog(`cheers from ${new Date().year}`)
 
 
 const usage = (actual, message) => `usage: transform-package [path/to/transform/dir] [path/to/package.json] | you passed ${JSON.stringify(actual)} | message: ${message}`
