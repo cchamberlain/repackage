@@ -26,7 +26,7 @@ var _lib2 = _interopRequireDefault(_lib);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var argv = _yargs2.default.usage('usage: $0 [init [options]] [options]').command('init', 'initialize repackage with transform directory and .repackagerc file', function (y) {
-  return y.option('username', { alias: 'u', demand: true, describe: 'your github username' }).option('organization', { alias: 'o', demand: false, describe: 'your github organization (falls back to username)' }).option('full', { alias: 'f', demand: true, describe: 'your full name (e.g. John Smith)' }).option('email', { alias: 'e', demand: true, describe: 'your email' }).option('host', { alias: 'h', demand: false, describe: 'the host for your documentation: \'github.io\' OR \'js.org\'' });
+  return y.option('username', { alias: 'u', demand: true, describe: 'your github username' }).option('organization', { alias: 'o', demand: false, describe: 'your github organization (falls back to username)' }).option('full', { alias: 'f', demand: true, describe: 'your full name (e.g. John Smith)' }).option('email', { alias: 'e', demand: true, describe: 'your email' }).option('host', { alias: 'h', demand: false, describe: 'the host for your documentation: "github.io" OR "js.org"' });
 }).alias('i', 'init').describe('i', 'initialize a source package directory').alias('t', 'transform').describe('t', 'relative path to package transform directory').alias('p', 'package').describe('p', 'relative path to package.json file').default({ t: 'src/package', p: 'package.json' }).help().strict().epilog('cheers from ' + new Date().year).argv;
 
 if (argv.init) {

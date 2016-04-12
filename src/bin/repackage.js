@@ -12,7 +12,7 @@ let argv = yargs.usage('usage: $0 [init [options]] [options]')
                                                                                                               .option('organization', { alias: 'o', demand: false, describe: 'your github organization (falls back to username)' })
                                                                                                               .option('full', { alias: 'f', demand: true, describe: 'your full name (e.g. John Smith)' })
                                                                                                               .option('email', { alias: 'e', demand: true, describe: 'your email' })
-                                                                                                              .option('host', { alias: 'h', demand: false, describe: `the host for your documentation: 'github.io' OR 'js.org'` }))
+                                                                                                              .option('host', { alias: 'h', demand: false, describe: 'the host for your documentation: "github.io" OR "js.org"' }))
 
                 .alias('i', 'init')
                 .describe('i', 'initialize a source package directory')
