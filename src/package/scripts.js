@@ -1,7 +1,7 @@
 const target = ['src', '.']
 
 const clean = (targets = []) => targets.map(x => `rimraf ${x}`).join(' && ')
-const compile = (targets = []) => targets.map(([src, dest, { isDir = true, watch = false } = {}]) => `babel ${src} ${isDir ? '-d' : '-o'}${watch ? ' --watch' : ''}`).join(' && ')
+const compile = (targets = []) => targets.map(([src, dest, { isDir = true, watch = false } = {}]) => `babel ${src} ${isDir ? '-d' : '-o'} ${dest}${watch ? ' --watch' : ''}`).join(' && ')
 
 export default ({} = {}) => ( { 'clean': clean(['bin', 'lib'])
                               , 'prestart': 'npm run clean'
