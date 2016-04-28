@@ -1,6 +1,6 @@
 {
   "name": "repackage",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Builds package.json file from its component parts. Fixes environment variable usage to make scripts Windows and OSX compatible.",
   "main": "lib/index.js",
   "bin": {
@@ -11,25 +11,6 @@
     "lib",
     "doc"
   ],
-  "scripts": {
-    "repackage": "node bin/repackage -t src/package -p package.json",
-    "prebuild": "rimraf bin && rimraf lib",
-    "build": "babel src -d .",
-    "watch": "npm run build -- --watch",
-    "predoc": "rimraf doc",
-    "doc": "esdoc -c ./esdoc.json",
-    "prerelease": "npm run build",
-    "release": "npm version patch && npm publish",
-    "postrelease": "npm run release-doc",
-    "prerelease-doc": "npm run doc",
-    "release-doc": "git subtree push --prefix doc origin gh-pages",
-    "postrelease-doc": "git commit -am \"doc-release\" && git push --follow-tags",
-    "test": "karma start"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cchamberlain/repackage.git"
-  },
   "keywords": [
     "package.json",
     "transformation",
@@ -38,6 +19,29 @@
     "NODE_ENV",
     "build"
   ],
+  "scripts": {
+    "clean": "rimraf bin && rimraf lib",
+    "prestart": "npm run clean",
+    "start": "babel src -d . --watch",
+    "prebuild": "npm run clean",
+    "build": "babel src -d .",
+    "predoc": "rimraf doc",
+    "doc": "esdoc -c ./esdoc.json",
+    "prerelease": "npm run build",
+    "release": "npm version patch && npm publish",
+    "postrelease": "npm run release-doc",
+    "prerelease-doc": "npm run doc",
+    "release-doc": "git subtree push --prefix doc origin gh-pages",
+    "postrelease-doc": "git commit -am \"doc-release\" && git push --follow-tags",
+    "upgrade": "ncu -a && npm update",
+    "test": "karma start"
+  },
+  "dependencies": {
+    "chai": "^3.5.0",
+    "deasync": "^0.1.5",
+    "systemjs": "^0.19.25",
+    "yargs": "^4.4.0"
+  },
   "devDependencies": {
     "babel-cli": "^6.6.5",
     "babel-preset-es2015": "^6.6.0",
@@ -49,15 +53,13 @@
     "rimraf": "^2.5.2"
   },
   "author": "Cole Chamberlain <cole.chamberlain@gmail.com> (https://github.com/cchamberlain)",
-  "license": "MIT",
   "bugs": {
     "url": "https://github.com/cchamberlain/repackage/issues"
   },
   "homepage": "https://repackage.js.org",
-  "dependencies": {
-    "chai": "^3.5.0",
-    "deasync": "^0.1.4",
-    "systemjs": "^0.19.25",
-    "yargs": "^4.4.0"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cchamberlain/repackage.git"
   }
 }
