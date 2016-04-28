@@ -13,9 +13,11 @@
   ],
   "scripts": {
     "repackage": "node bin/repackage -t src/package -p package.json",
-    "prebuild": "rimraf bin && rimraf lib",
+    "clean": "rimraf bin && rimraf lib",
+    "prestart": "npm run clean",
+    "start": "babel src -d . --watch",
+    "prebuild": "npm run clean",
     "build": "babel src -d .",
-    "watch": "npm run build -- --watch",
     "predoc": "rimraf doc",
     "doc": "esdoc -c ./esdoc.json",
     "prerelease": "npm run build",
@@ -24,6 +26,7 @@
     "prerelease-doc": "npm run doc",
     "release-doc": "git subtree push --prefix doc origin gh-pages",
     "postrelease-doc": "git commit -am \"doc-release\" && git push --follow-tags",
+    "upgrade": "ncu -a && npm update",
     "test": "karma start"
   },
   "repository": {
