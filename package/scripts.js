@@ -16,7 +16,7 @@ var clean = function clean() {
                                                             return 'rimraf ' + x;
                               }).join(' && ');
 };
-var compile = function compile() {
+var babel = function babel() {
                               var targets = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
                               return targets.map(function (_ref) {
                                                             var _ref2 = _slicedToArray(_ref, 3);
@@ -40,18 +40,19 @@ exports.default = function () {
 
                               return { 'clean': clean(['bin', 'lib']),
                                                             'prestart': 'npm run clean',
-                                                            'start': compile([[].concat(target, [{ watch: true }])]),
+                                                            'start': babel([[].concat(target, [{ watch: true }])]),
                                                             'prebuild': 'npm run clean',
-                                                            'build': compile([target]),
+                                                            'build': babel([target]),
                                                             'predoc': clean(['doc']),
-                                                            'doc': 'esdoc -c ./esdoc.json',
-                                                            'prerelease': 'npm run build',
+                                                            'doc': 'esdoc -c ./esdoc.json && git-save -- docs',
+                                                            'prerelease': 'npm run build && npm run git-save -- release',
                                                             'release': 'npm version patch && npm publish',
                                                             'postrelease': 'npm run release-doc',
                                                             'prerelease-doc': 'npm run doc',
                                                             'release-doc': 'git subtree push --prefix doc origin gh-pages',
                                                             'postrelease-doc': 'git commit -am \"doc-release\" && git push --follow-tags',
                                                             'upgrade': 'ncu -a && npm update',
-                                                            'test': 'karma start'
+                                                            'git-save': 'git add -A && git commit -am ',
+                                                            'test': 'jasmine'
                               };
 };
