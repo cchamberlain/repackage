@@ -10,7 +10,7 @@
     "access": null,
     "description": null,
     "lineNumber": 1,
-    "content": "#! /usr/bin/env node\r\n\r\nimport { argv } from 'yargs'\r\nimport { assert } from 'chai'\r\nimport fs from 'fs'\r\nimport path from 'path'\r\nimport System from 'systemjs'\r\n\r\nconst isWin = process.platform === 'win32'\r\n\r\nexport default function transformPackage(packageTransformDir, packagePath) {\r\n  return readPaths(packageTransformDir).then(packageTransformPaths => {\r\n    let imports = packageTransformPaths.filter(x => x.endsWith('.js'))\r\n    return readJSON('.repackagerc').then(config => {\r\n      return Promise.all(imports.map(importPath => System.import(importPath).then(lib => transformNode([path.basename(importPath, '.js'), loadNode(config, lib)]))))\r\n                    .then(libs => Object.assign({}, ...libs))\r\n                    .then(packageFields => {\r\n                        return readJSON(packagePath).then(packageJSON => {\r\n                          return Promise.all(packageTransformPaths.filter(x => x.endsWith('.json')).map(transformPath => {\r\n                            return readJSON(transformPath).then(transformJSON => transformNode([path.basename(transformPath, '.json'), transformJSON]))\r\n                          }))\r\n                          .then(transforms => Object.assign({}, packageJSON, ...transforms, packageFields))\r\n                          .then(packageUnsorted => writeJSON(packagePath, Object.keys(packageUnsorted).sort((a, b) => {\r\n                            const sortBy = ['name', 'version', 'description', 'main', 'bin', 'files', 'keywords', 'scripts', 'dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']\r\n                            let indexOfA = sortBy.indexOf(a)\r\n                            let indexOfB = sortBy.indexOf(b)\r\n                            if(indexOfA !== -1 && indexOfB !== -1) {\r\n                              if(indexOfA < indexOfB)\r\n                                return -1\r\n                              if(indexOfA > indexOfB)\r\n                                return 1\r\n                              return 0\r\n                            }\r\n                            if(indexOfA !== -1)\r\n                              return -1\r\n                            if(indexOfB !== -1)\r\n                              return 1\r\n                            return a.localeCompare(b)\r\n                          }).reduce((obj, key) => {\r\n                            obj[key] = packageUnsorted[key]\r\n                            return obj\r\n                          }, {})))\r\n                        })\r\n                      })\r\n                    }).catch(err =>{ throw err }) //new Error('No package.config.json found. Add one to your project root as specified at https://repackage.js.org'))\r\n    })\r\n}\r\n\r\nconst loadNode = (config, lib) => {\r\n  let libNode = lib.default || lib\r\n  return typeof libNode === 'function' ? libNode(config) : libNode\r\n}\r\n\r\n\r\nconst transformNode = ([key, node]) => {\r\n  if(key === 'scripts' && isWin) {\r\n    return  { [key]: Object.keys(node)\r\n                          .map(scriptName => ([scriptName, node[scriptName].replace(/NODE_ENV=([A-Za-z_-]+)/, 'set NODE_ENV=$1&&')]))\r\n                          .reduce((result, [scriptName, script]) => {\r\n                            result[scriptName] = script\r\n                            return result\r\n                          }, {})\r\n            }\r\n  }\r\n  return { [key]: node }\r\n}\r\n\r\nconst readPaths = dirPath => {\r\n  return new Promise((resolve, reject) => {\r\n    fs.readdir(dirPath, (err, files) => {\r\n      if(err) return reject(err)\r\n      resolve(files.filter(x => x !== 'config.json').map(x => path.join(dirPath, x)))\r\n    })\r\n  })\r\n}\r\n\r\nconst readJSON = jsonPath => {\r\n  return new Promise((resolve, reject) => {\r\n    fs.readFile(jsonPath, 'utf8', (err, json) => {\r\n      if(err) return reject(err)\r\n      resolve(JSON.parse(json))\r\n    })\r\n  })\r\n}\r\n\r\nconst writeJSON = (jsonPath, json) => {\r\n  return new Promise((resolve, reject) => {\r\n    fs.writeFile(jsonPath, JSON.stringify(json, null, 2), 'utf8', (err) => {\r\n      if(err) return reject(err)\r\n      resolve(`${jsonPath} saved successfully!`)\r\n    })\r\n  })\r\n}\r\n"
+    "content": "import Promise from 'bluebird'\r\nimport System from 'systemjs'\r\nimport { argv } from 'yargs'\r\nimport { assert } from 'chai'\r\nimport fs from 'fs'\r\nimport path from 'path'\r\n\r\nconst isWin = process.platform === 'win32'\r\n\r\n\r\nexport default function createRepackage({ log }) {\r\n\r\n  const loadNode = (config, lib) => {\r\n    let libNode = lib.default || lib\r\n    return typeof libNode === 'function' ? libNode(config) : libNode\r\n  }\r\n\r\n\r\n  const transformNode = ([key, node]) => {\r\n    if(key === 'scripts' && isWin) {\r\n      return  { [key]: Object.keys(node)\r\n                            .map(scriptName => ([scriptName, node[scriptName].replace(/NODE_ENV=([A-Za-z_-]+)/, 'set NODE_ENV=$1&&')]))\r\n                            .reduce((result, [scriptName, script]) => {\r\n                              result[scriptName] = script\r\n                              return result\r\n                            }, {})\r\n              }\r\n    }\r\n    return { [key]: node }\r\n  }\r\n\r\n  const readPaths = dirPath => {\r\n    return new Promise((resolve, reject) => {\r\n      fs.readdir(dirPath, (err, files) => {\r\n        if(err) return reject(err)\r\n        resolve(files.filter(x => x !== 'config.json').map(x => path.join(dirPath, x)))\r\n      })\r\n    })\r\n  }\r\n\r\n  const readJSON = (jsonPath, fallback) => {\r\n    return new Promise((resolve, reject) => {\r\n      fs.readFile(jsonPath, 'utf8', (err, json) => {\r\n        if(err) {\r\n          if(fallback)\r\n            return resolve(typeof fallback === 'function' ? fallback(err) : fallback)\r\n          return reject(err)\r\n        }\r\n        resolve(JSON.parse(json))\r\n      })\r\n    })\r\n  }\r\n\r\n  const writeJSON = (jsonPath, json) => {\r\n    return new Promise((resolve, reject) => {\r\n      fs.writeFile(jsonPath, JSON.stringify(json, null, 2), 'utf8', (err) => {\r\n        if(err) return reject(err)\r\n        resolve(`${jsonPath} saved successfully!`)\r\n      })\r\n    })\r\n  }\r\n\r\n\r\n  const repackage = (packageTransformDir, packagePath) => {\r\n    return readPaths(packageTransformDir).then(packageTransformPaths => {\r\n      let imports = packageTransformPaths.filter(x => x.endsWith('.js'))\r\n      return readJSON('.repackagerc', () => {\r\n        log.warn('no .repackagerc found, bypassing use of author specific fields')\r\n        return {}\r\n      }).then(config => {\r\n        return Promise.all(imports.map(importPath => System.import(importPath).then(lib => transformNode([path.basename(importPath, '.js'), loadNode(config, lib)]))))\r\n                      .then(libs => Object.assign({}, ...libs))\r\n                      .then(packageFields => {\r\n                          return readJSON(packagePath).then(packageJSON => {\r\n                            return Promise.all(packageTransformPaths.filter(x => x.endsWith('.json')).map(transformPath => {\r\n                              return readJSON(transformPath).then(transformJSON => transformNode([path.basename(transformPath, '.json'), transformJSON]))\r\n                            }))\r\n                            .then(transforms => Object.assign({}, packageJSON, ...transforms, packageFields))\r\n                            .then(packageUnsorted => writeJSON(packagePath, Object.keys(packageUnsorted).sort((a, b) => {\r\n                              const sortBy = ['name', 'version', 'description', 'main', 'bin', 'files', 'keywords', 'scripts', 'dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']\r\n                              let indexOfA = sortBy.indexOf(a)\r\n                              let indexOfB = sortBy.indexOf(b)\r\n                              if(indexOfA !== -1 && indexOfB !== -1) {\r\n                                if(indexOfA < indexOfB)\r\n                                  return -1\r\n                                if(indexOfA > indexOfB)\r\n                                  return 1\r\n                                return 0\r\n                              }\r\n                              if(indexOfA !== -1)\r\n                                return -1\r\n                              if(indexOfB !== -1)\r\n                                return 1\r\n                              return a.localeCompare(b)\r\n                            }).reduce((obj, key) => {\r\n                              obj[key] = packageUnsorted[key]\r\n                              return obj\r\n                            }, {})))\r\n                          })\r\n                        })\r\n                      }).catch(err =>{ throw err })\r\n    })\r\n  }\r\n\r\n  return repackage\r\n}\r\n"
   },
   {
     "__docId__": 1,
@@ -25,7 +25,7 @@
     "importPath": "repackage",
     "importStyle": null,
     "description": null,
-    "lineNumber": 9,
+    "lineNumber": 8,
     "undocument": true,
     "type": {
       "types": [
@@ -38,28 +38,26 @@
     "kind": "function",
     "static": true,
     "variation": null,
-    "name": "transformPackage",
+    "name": "createRepackage",
     "memberof": "lib/index.js",
-    "longname": "lib/index.js~transformPackage",
+    "longname": "lib/index.js~createRepackage",
     "access": null,
     "export": true,
     "importPath": "repackage",
-    "importStyle": "transformPackage",
+    "importStyle": "createRepackage",
     "description": null,
     "lineNumber": 11,
     "undocument": true,
     "params": [
       {
-        "name": "packageTransformDir",
+        "name": "objectPattern",
         "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "packagePath",
-        "types": [
-          "*"
-        ]
+          "{\"log\": *}"
+        ],
+        "defaultRaw": {
+          "log": null
+        },
+        "defaultValue": "{\"log\":null}"
       }
     ],
     "return": {
@@ -70,112 +68,7 @@
     "generator": false
   },
   {
-    "__docId__": 3,
-    "kind": "variable",
-    "static": true,
-    "variation": null,
-    "name": "loadNode",
-    "memberof": "lib/index.js",
-    "longname": "lib/index.js~loadNode",
-    "access": null,
-    "export": false,
-    "importPath": "repackage",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 49,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
     "__docId__": 4,
-    "kind": "variable",
-    "static": true,
-    "variation": null,
-    "name": "transformNode",
-    "memberof": "lib/index.js",
-    "longname": "lib/index.js~transformNode",
-    "access": null,
-    "export": false,
-    "importPath": "repackage",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 55,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 5,
-    "kind": "variable",
-    "static": true,
-    "variation": null,
-    "name": "readPaths",
-    "memberof": "lib/index.js",
-    "longname": "lib/index.js~readPaths",
-    "access": null,
-    "export": false,
-    "importPath": "repackage",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 68,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 6,
-    "kind": "variable",
-    "static": true,
-    "variation": null,
-    "name": "readJSON",
-    "memberof": "lib/index.js",
-    "longname": "lib/index.js~readJSON",
-    "access": null,
-    "export": false,
-    "importPath": "repackage",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 77,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 7,
-    "kind": "variable",
-    "static": true,
-    "variation": null,
-    "name": "writeJSON",
-    "memberof": "lib/index.js",
-    "longname": "lib/index.js~writeJSON",
-    "access": null,
-    "export": false,
-    "importPath": "repackage",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 86,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 9,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -188,7 +81,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 10,
+    "__docId__": 5,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -201,7 +94,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 11,
+    "__docId__": 6,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -214,7 +107,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 12,
+    "__docId__": 7,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -227,7 +120,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 13,
+    "__docId__": 8,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -240,7 +133,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 14,
+    "__docId__": 9,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -253,7 +146,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 15,
+    "__docId__": 10,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -266,7 +159,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 16,
+    "__docId__": 11,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -279,7 +172,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 17,
+    "__docId__": 12,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -292,7 +185,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 18,
+    "__docId__": 13,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -305,7 +198,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 19,
+    "__docId__": 14,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -318,7 +211,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 20,
+    "__docId__": 15,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -331,7 +224,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 21,
+    "__docId__": 16,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -344,7 +237,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 22,
+    "__docId__": 17,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -357,7 +250,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 23,
+    "__docId__": 18,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -370,7 +263,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 24,
+    "__docId__": 19,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -383,7 +276,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 25,
+    "__docId__": 20,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -396,7 +289,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 26,
+    "__docId__": 21,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -409,7 +302,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 27,
+    "__docId__": 22,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -422,7 +315,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 28,
+    "__docId__": 23,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -435,7 +328,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 29,
+    "__docId__": 24,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -448,7 +341,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 30,
+    "__docId__": 25,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -461,7 +354,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 31,
+    "__docId__": 26,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -474,7 +367,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 32,
+    "__docId__": 27,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -487,7 +380,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 33,
+    "__docId__": 28,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -500,7 +393,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 34,
+    "__docId__": 29,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -513,7 +406,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 35,
+    "__docId__": 30,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -526,7 +419,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 36,
+    "__docId__": 31,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -539,7 +432,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 37,
+    "__docId__": 32,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -552,7 +445,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 38,
+    "__docId__": 33,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -565,7 +458,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 39,
+    "__docId__": 34,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -578,7 +471,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 40,
+    "__docId__": 35,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -591,7 +484,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 41,
+    "__docId__": 36,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -604,7 +497,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 42,
+    "__docId__": 37,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -617,7 +510,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 43,
+    "__docId__": 38,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -630,7 +523,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 44,
+    "__docId__": 39,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -643,7 +536,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 45,
+    "__docId__": 40,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -656,7 +549,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 46,
+    "__docId__": 41,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -669,7 +562,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 47,
+    "__docId__": 42,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -682,7 +575,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 48,
+    "__docId__": 43,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -695,7 +588,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 49,
+    "__docId__": 44,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -708,7 +601,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 50,
+    "__docId__": 45,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -721,7 +614,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 51,
+    "__docId__": 46,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -734,7 +627,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 52,
+    "__docId__": 47,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -747,7 +640,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 53,
+    "__docId__": 48,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -760,7 +653,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 54,
+    "__docId__": 49,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -773,7 +666,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 55,
+    "__docId__": 50,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -786,7 +679,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 57,
+    "__docId__": 52,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -799,7 +692,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 58,
+    "__docId__": 53,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -812,7 +705,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 59,
+    "__docId__": 54,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -825,7 +718,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 60,
+    "__docId__": 55,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -838,7 +731,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 61,
+    "__docId__": 56,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -851,7 +744,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 62,
+    "__docId__": 57,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -864,7 +757,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 63,
+    "__docId__": 58,
     "kind": "external",
     "static": true,
     "variation": null,
@@ -877,7 +770,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 64,
+    "__docId__": 59,
     "kind": "external",
     "static": true,
     "variation": null,
