@@ -9,7 +9,7 @@ export default ({} = {}) => ( { 'clean': clean(['bin', 'lib'])
                               , 'prebuild': 'npm run clean'
                               , 'build': babel([target])
                               , 'predoc': clean(['doc'])
-                              , 'doc': 'esdoc -c ./esdoc.json'
+                              , 'doc': 'esdoc -c ./esdoc.json && ncp CNAME doc/CNAME'
                               , 'postdoc': 'npm run git-save -- docs'
                               , 'prerelease': 'npm run build'
                               , 'release': 'npm version patch && npm publish'
