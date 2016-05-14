@@ -4,8 +4,11 @@ import path from 'path'
 import fs from 'fs'
 import yargs from 'yargs'
 import { assert } from 'chai'
+import { createLogger } from 'bunyan'
 import deasync from 'deasync'
-import transformPackage from '../lib'
+import createRepackage from '../lib'
+
+const log = createLogger({ name: 'repackage', level: 'info' })
 
 let argv = yargs.usage('usage: $0 [init [options]] [options]')
                 .command('init', 'initialize repackage with transform directory and .repackagerc file', y => y.option('username', { alias: 'u', demand: true, describe: 'your github username' })
@@ -34,7 +37,7 @@ if(argv.init) {
     fs.writeFileSync('.repackagerc', JSON.stringify(repackagerc, null, 2), 'utf8')
   } catch(err) {
     if(err) {
-      console.error(err, 'error during writing .repackagerc')
+      log.error(err, 'error during writing .repackagerc')
       yargs.showHelp()
       process.exit(1)
     }
@@ -44,14 +47,14 @@ if(argv.init) {
 
 
 let done = false
-transformPackage(argv.transform, argv.package)
+const repackage = createRepackage({ log })
+repackage(argv.transform, argv.package)
   .then(message => {
-    console.info(message)
+    log.info(message)
     done = true
   })
   .catch(err => {
-    console.error(err, 'you may need to use repackage init [options]')
-    console.error('you may ')
+    log.error(err, 'you may need to use repackage init [options]')
     yargs.showHelp()
     done = true
   })

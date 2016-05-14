@@ -42,7 +42,8 @@ ___
 
 ```js
 
-import repackage from 'repackage'
+import createRepackage from 'repackage'
+const repackage = createRepackage({ log: console })
 repackage('path/to/transform/dir', 'path/to/package.json')
   .then(message => console.info(message))
   .catch(err => console.error(err))

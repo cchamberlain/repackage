@@ -15,6 +15,8 @@ var _yargs2 = _interopRequireDefault(_yargs);
 
 var _chai = require('chai');
 
+var _bunyan = require('bunyan');
+
 var _deasync = require('deasync');
 
 var _deasync2 = _interopRequireDefault(_deasync);
@@ -24,6 +26,8 @@ var _lib = require('../lib');
 var _lib2 = _interopRequireDefault(_lib);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var log = (0, _bunyan.createLogger)({ name: 'repackage', level: 'info' });
 
 var argv = _yargs2.default.usage('usage: $0 [init [options]] [options]').command('init', 'initialize repackage with transform directory and .repackagerc file', function (y) {
   return y.option('username', { alias: 'u', demand: true, describe: 'your github username' }).option('organization', { alias: 'o', demand: false, describe: 'your github organization (falls back to username)' }).option('full', { alias: 'f', demand: true, describe: 'your full name (e.g. John Smith)' }).option('email', { alias: 'e', demand: true, describe: 'your email' }).option('host', { alias: 'h', demand: false, describe: 'the host for your documentation: "github.io" OR "js.org"' });
@@ -42,7 +46,7 @@ if (argv.init) {
     _fs2.default.writeFileSync('.repackagerc', JSON.stringify(repackagerc, null, 2), 'utf8');
   } catch (err) {
     if (err) {
-      console.error(err, 'error during writing .repackagerc');
+      log.error(err, 'error during writing .repackagerc');
       _yargs2.default.showHelp();
       process.exit(1);
     }
@@ -51,12 +55,12 @@ if (argv.init) {
 }
 
 var done = false;
-(0, _lib2.default)(argv.transform, argv.package).then(function (message) {
-  console.info(message);
+var repackage = (0, _lib2.default)({ log: log });
+repackage(argv.transform, argv.package).then(function (message) {
+  log.info(message);
   done = true;
 }).catch(function (err) {
-  console.error(err, 'you may need to use repackage init [options]');
-  console.error('you may ');
+  log.error(err, 'you may need to use repackage init [options]');
   _yargs2.default.showHelp();
   done = true;
 });
