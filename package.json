@@ -1,6 +1,6 @@
 {
   "name": "repackage",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "description": "Builds package.json file from its component parts. Fixes environment variable usage to make scripts Windows and OSX compatible.",
   "main": "lib/index.js",
   "bin": {
@@ -26,7 +26,8 @@
     "prebuild": "npm run clean",
     "build": "babel src -d .",
     "predoc": "rimraf doc",
-    "doc": "esdoc -c ./esdoc.json && git-save -- docs",
+    "doc": "esdoc -c ./esdoc.json && ncp CNAME doc/CNAME",
+    "postdoc": "npm run git-save -- docs",
     "prerelease": "npm run build",
     "release": "npm version patch && npm publish",
     "postrelease": "npm run release-doc",
