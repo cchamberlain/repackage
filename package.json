@@ -1,6 +1,6 @@
 {
   "name": "repackage",
-  "version": "0.2.16",
+  "version": "0.2.17",
   "description": "Builds package.json file from its component parts. Fixes environment variable usage to make scripts Windows and OSX compatible.",
   "main": "lib/index.js",
   "bin": {
