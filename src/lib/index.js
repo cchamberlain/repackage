@@ -12,7 +12,7 @@ export default function createRepackage({ log }) {
 
   const loadNode = (config, lib) => {
     let libNode = lib.default || lib
-    return typeof libNode === 'function' ? libNode(config) : libNode
+    return typeof libNode === 'function' ? libNode({ path, fs, ...config }) : libNode
   }
 
 
