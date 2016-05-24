@@ -1,6 +1,6 @@
 {
   "name": "repackage",
-  "version": "0.2.18",
+  "version": "0.3.1",
   "description": "Builds package.json file from its component parts. Fixes environment variable usage to make scripts Windows and OSX compatible.",
   "main": "lib/index.js",
   "bin": {
@@ -42,7 +42,7 @@
     "bluebird": "^3.3.5",
     "bunyan": "^1.8.1",
     "chai": "^3.5.0",
-    "deasync": "^0.1.5",
+    "deasync": "^0.1.6",
     "systemjs": "^0.19.25",
     "yargs": "^4.4.0"
   },
