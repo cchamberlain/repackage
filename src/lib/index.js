@@ -9,7 +9,6 @@ const isWin = process.platform === 'win32'
 
 
 export default function createRepackage({ log }) {
-
   const loadNode = (config, lib) => {
     let libNode = lib.default || lib
     return typeof libNode === 'function' ? libNode({ path, fs, ...config }) : libNode
@@ -62,6 +61,8 @@ export default function createRepackage({ log }) {
 
 
   const repackage = (packageTransformDir, packagePath) => {
+    //System.config({ transpiler: 'babel' })
+
     return readPaths(packageTransformDir).then(packageTransformPaths => {
       let imports = packageTransformPaths.filter(x => x.endsWith('.js'))
       return readJSON('.repackagerc', () => {

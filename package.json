@@ -43,7 +43,7 @@
     "bunyan": "^1.8.1",
     "chai": "^3.5.0",
     "deasync": "^0.1.6",
-    "systemjs": "^0.19.25",
+    "systemjs": "0.19.29",
     "yargs": "^4.4.0"
   },
   "devDependencies": {
@@ -61,6 +61,14 @@
     "url": "https://github.com/cchamberlain/repackage/issues"
   },
   "homepage": "https://repackage.js.org",
+  "jspm": {
+    "dependencies": {},
+    "devDependencies": {
+      "babel": "npm:babel-core@^5.8.24",
+      "babel-runtime": "npm:babel-runtime@^5.8.24",
+      "core-js": "npm:core-js@^1.1.4"
+    }
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
